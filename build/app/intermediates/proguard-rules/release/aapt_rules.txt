@@ -1,8 +1,0 @@
-# Referenced at D:\Test\sqlitetoexcel\example\build\app\intermediates\merged_manifests\release\AndroidManifest.xml:20
--keep class androidx.core.app.CoreComponentFactory { <init>(); }
-# Referenced at D:\Test\sqlitetoexcel\example\build\app\intermediates\merged_manifests\release\AndroidManifest.xml:27
--keep class com.testing.sqlitetoexcel_example.MainActivity { <init>(); }
-# Referenced at D:\Test\sqlitetoexcel\example\build\app\intermediates\merged_manifests\release\AndroidManifest.xml:20
--keep class io.flutter.app.FlutterApplication { <init>(); }
-# Referenced at D:\Test\sqlitetoexcel\example\build\app\intermediates\merged_manifests\release\AndroidManifest.xml:48
--keep class io.flutter.plugins.imagepicker.ImagePickerFileProvider { <init>(); }

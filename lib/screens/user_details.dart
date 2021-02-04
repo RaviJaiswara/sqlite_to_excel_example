@@ -243,7 +243,14 @@ class UserDetailState extends State<UserDetail> {
                           onPressed: () {
                             setState(() {
                               debugPrint("Save button clicked");
-                              _save();
+                              if (nameController.text.isEmpty) {
+                                _showAlertDialog('Error', 'Name is required');
+                              } else if (mobileNumberController.text.isEmpty) {
+                                _showAlertDialog(
+                                    'Error', 'Mobile Number is required');
+                              } else {
+                                _save();
+                              }
                             });
                           },
                         ),
@@ -375,9 +382,9 @@ class UserDetailState extends State<UserDetail> {
   void _save() async {
     moveToLastScreen();
 
-    user.date = dateController.text != null
+    user.date = dateController.text.isNotEmpty
         ? dateController.text
-        : DateFormat.yMMMd().format(DateTime.now());
+        : DateFormat("dd-MM-yyyy").format(DateTime.now());
 
     int result;
     if (user.id != null) {
@@ -433,7 +440,7 @@ class UserDetailState extends State<UserDetail> {
     if (picked != null) {
       setState(() {
         dateController.text =
-            DateFormat.yMMMd().format(DateTime.parse(picked.toString()));
+            DateFormat("dd-MM-yyyy").format(DateTime.parse(picked.toString()));
       });
     }
   }

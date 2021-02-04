@@ -1,16 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:sqlitetoexcel/sqlitetoexcel.dart';
 import 'package:sqlitetoexcel_example/screens/user_details.dart';
+import 'package:sqlitetoexcel_example/screens/export_excel.dart';
 import 'package:sqlitetoexcel_example/models/user.dart';
 import 'package:sqlitetoexcel_example/utils/database_helper.dart';
+import 'package:sqlitetoexcel_example/utils/excel_helper.dart';
 
 class UserList extends StatefulWidget {
   @override
@@ -21,13 +19,13 @@ class UserList extends StatefulWidget {
 
 class UserListState extends State<UserList> {
   DatabaseHelper databaseHelper = DatabaseHelper();
+  ExcelHelper excelHelper = ExcelHelper();
   List<User> userList;
   int count = 0;
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     getPermission();
   }
@@ -118,6 +116,7 @@ class UserListState extends State<UserList> {
 
   void updateListView() {
     final Future<Database> dbFuture = databaseHelper.initializeDatabase();
+
     dbFuture.then((database) {
       Future<List<User>> userListFuture = databaseHelper.getUserList();
       userListFuture.then((userList) {
@@ -164,8 +163,28 @@ class UserListState extends State<UserList> {
             ),
             onPressed: () {
               Navigator.pop(dialogContext);
-              _exportSingleTable().then((path) {
-                showSnackBar(path.toString());
+              showDialog(
+                barrierDismissible: false,
+                context: dialogContext,
+                builder: (_) => ExportExcel(),
+              ).then((value) {
+                if (value == 'error') {
+                  showSnackBar('Please select date range');
+                } else {
+                  databaseHelper
+                      .getUserBetweenDate(value['startDate'].toString(),
+                          value['endDate'].toString())
+                      .then((value) {
+                    for (int i = 0; i < value.length; i++) {
+                      databaseHelper.insertLocalUser(value[i]);
+                    }
+                    excelHelper.exportSingleTable().then((path) {
+                      databaseHelper.deleteLocalUser();
+                      showSnackBar(
+                          'Your excel file is saved in ' + path.toString());
+                    });
+                  });
+                }
               });
             },
             color: Colors.red,
@@ -185,7 +204,7 @@ class UserListState extends State<UserList> {
 
   void showSnackBar(String message) {
     scaffoldKey.currentState.showSnackBar(SnackBar(
-      content: Text('Your excel file is saved in ' + message),
+      content: Text(message),
       duration: Duration(seconds: 2),
       action: SnackBarAction(
         label: 'Close',
@@ -197,36 +216,5 @@ class UserListState extends State<UserList> {
 
   requestPermission() async {
     await PermissionHandler().requestPermissions([PermissionGroup.storage]);
-  }
-
-  Future<String> _exportSingleTable() async {
-    var excludes = new List();
-    var dbPath, dir;
-    var prettify = new Map<dynamic, dynamic>();
-    var finalpath = "";
-
-    // Exclude column(s) from being exported
-    excludes.add("id");
-
-    // Prettifies columns name
-    prettify["name"] = "Name";
-
-    // Table name that will be exported
-    var tableName = "user_table";
-
-    final directory = await getExternalStorageDirectory();
-    var path = directory.path;
-    path = directory.path;
-    dbPath = join(directory.path, 'users.db');
-    print(dbPath);
-    dir = path + "/";
-
-    try {
-      finalpath = await Sqlitetoexcel.exportSingleTable(
-          dbPath, "documents", "", "users.xls", tableName, excludes, prettify);
-    } on PlatformException catch (e) {
-      print(e.message.toString());
-    }
-    return finalpath;
   }
 }
